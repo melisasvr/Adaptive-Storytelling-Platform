@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Adaptive Storytelling Platform</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Your provided CSS here (unchanged) */
+    /* Paste all your CSS code here as in the original file */
+  </style>
+</head>
+<body>
+  <div class="floating-particles" id="particles"></div>
+
+  <!-- Main Container -->
+  <div class="container">
+    <div class="header">
+      <h1>✨ Adaptive Storytelling Platform ✨</h1>
+      <p>Your choices shape the narrative, and the story adapts to your mood</p>
+    </div>
+
+    <div class="story-container">
+      <div class="story-panel story-content">
+        <div id="narrative" class="narrative-text">Welcome to your personalized story experience!</div>
+        <div id="dialogue" class="character-dialogue" style="display: none;"></div>
+        <div class="typing-indicator" id="typingIndicator">
+          <span>The story is adapting...</span>
+          <div class="typing-dots">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar">
+        <div class="mood-indicator">
+          <h3>Current Mood</h3>
+          <div class="mood-value" id="currentMood">contemplative</div>
+          <div class="engagement-bar">
+            <div class="engagement-fill" id="engagementBar" style="width: 50%"></div>
+          </div>
+          <small id="engagementText">Medium Engagement</small>
+        </div>
+
+        <div class="visual-style">
+          <h3>Visual Style</h3>
+          <div class="color-palette" id="colorPalette">
+            <div class="color-swatch" style="background: #6B73FF;"></div>
+            <div class="color-swatch" style="background: #9B59B6;"></div>
+            <div class="color-swatch" style="background: #3498DB;"></div>
+          </div>
+          <p><strong>Lighting:</strong> <span id="lighting">soft</span></p>
+          <p><strong>Atmosphere:</strong> <span id="atmosphere">peaceful</span></p>
+        </div>
+
+        <div class="recommendations">
+          <h3>Recommendations</h3>
+          <div id="recommendationsList"></div>
+        </div>
+
+        <div class="user-stats">
+          <h3>Your Journey</h3>
+          <div class="story-progress">
+            <div class="progress-bar" id="progressBar" style="width: 15%"></div>
+          </div>
+          <div class="stat-item">
+            <span>Choices Made:</span>
+            <strong id="choiceCount">0</strong>
+          </div>
+          <div class="stat-item">
+            <span>Story Branches:</span>
+            <strong id="branchCount">1</strong>
+          </div>
+          <div class="stat-item">
+            <span>Time Invested:</span>
+            <strong id="timeSpent">0m</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="choices-section">
+      <h3>What do you choose?</h3>
+      <input type="text" class="choice-input" id="customChoice" placeholder="Type your own choice or select from the options below..." onkeypress="handleEnterKey(event)">
+      <div class="choice-buttons">
+        <button class="choice-btn quick-choice" onclick="makeChoice('I want to explore the mysterious surroundings')">🌲 Explore Surroundings</button>
+        <button class="choice-btn quick-choice" onclick="makeChoice('I\'ll approach someone for guidance')">👥 Seek Guidance</button>
+        <button class="choice-btn quick-choice" onclick="makeChoice('I need to investigate that strange sound')">🔍 Investigate</button>
+        <button class="choice-btn quick-choice" onclick="makeChoice('Time to take action boldly!')">⚡ Take Bold Action</button>
+        <button class="choice-btn" onclick="makeCustomChoice()">✨ Submit Custom Choice</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // State Management
+    let storyState = {
+      userId: 'web_user_' + Math.random().toString(36).substr(2, 9),
+      choiceCount: 0,
+      startTime: Date.now(),
+      currentMood: 'contemplative',
+      engagementLevel: 50,
+      storyProgress: 15,
+      branches: 1
+    };
+
+    const storyContent = {
+      narratives: {
+        adventurous: ["You feel a rush of energy as the world opens up before you.", "The adventure begins now!", "Something big lies ahead..."],
+        mysterious: ["A shadow moves just out of sight...", "There's something not quite right about this place.", "The mystery deepens..."],
+        romantic: ["Your heart flutters at the sight of them.", "Love is in the air.", "This moment feels destined."],
+        dark: ["A chill runs down your spine...", "Something evil stirs in the darkness.", "You are not alone anymore."],
+        humorous: ["You trip over nothing and land face-first.", "That was embarrassing.", "But hey, laughter helps!"],
+        contemplative: ["You pause and reflect on the journey so far.", "Every choice has meaning.", "What comes next?"]
+      },
+      dialogues: {
+        adventurous: ["Let's go already!", "Adventure awaits!", "I'm ready for anything!"],
+        mysterious: ["What does it mean?", "I must find out more.", "There's more than meets the eye."],
+        romantic: ["You have my heart.", "I never expected this.", "Stay with me..."],
+        dark: ["We're in danger.", "It's watching us.", "Don't look back."],
+        humorous: ["Did that really happen?", "I can't believe this!", "This is ridiculous!"],
+        contemplative: ["What is our purpose here?", "Every path leads somewhere.", "Wisdom waits."]
+      }
+    };
+
+    const moodStyles = {
+      adventurous: { colors: ['#FF6B35', '#F7931E', '#FFD23F'], lighting: 'bright', atmosphere: 'energetic' },
+      mysterious: { colors: ['#2E1065', '#5D4E75', '#8B7EA8'], lighting: 'dim', atmosphere: 'ethereal' },
+      romantic: { colors: ['#FFB6C1', '#FFC0CB', '#FF69B4'], lighting: 'warm', atmosphere: 'soft' },
+      dark: { colors: ['#1C1C1C', '#2F2F2F', '#4F4F4F'], lighting: 'shadowy', atmosphere: 'ominous' },
+      humorous: { colors: ['#F39C12', '#E74C3C', '#2ECC71'], lighting: 'bright', atmosphere: 'playful' },
+      contemplative: { colors: ['#6B73FF', '#9B59B6', '#3498DB'], lighting: 'soft', atmosphere: 'peaceful' },
+      tense: { colors: ['#E74C3C', '#C0392B', '#922B21'], lighting: 'harsh', atmosphere: 'intense' }
+    };
+
+    function analyzeMood(choiceText) {
+      const text = choiceText.toLowerCase();
+      const keywords = {
+        adventurous: ['explore', 'adventure', 'journey', 'quest'],
+        mysterious: ['investigate', 'strange', 'secret', 'curious'],
+        romantic: ['love', 'heart', 'feel', 'connection'],
+        dark: ['dark', 'fear', 'danger', 'evil'],
+        humorous: ['funny', 'laugh', 'ridiculous', 'joke'],
+        contemplative: ['think', 'reflect', 'meaning', 'consider']
+      };
+      let maxScore = 0;
+      let detectedMood = 'contemplative';
+      for (const [mood, words] of Object.entries(keywords)) {
+        const score = words.reduce((acc, word) => acc + (text.includes(word) ? 1 : 0), 0);
+        if (score > maxScore) {
+          maxScore = score;
+          detectedMood = mood;
+        }
+      }
+      return detectedMood;
+    }
+
+    function updateVisualStyle(mood) {
+      const style = moodStyles[mood];
+      const palette = document.getElementById('colorPalette');
+      palette.innerHTML = '';
+      style.colors.forEach(color => {
+        const swatch = document.createElement('div');
+        swatch.className = 'color-swatch';
+        swatch.style.background = color;
+        palette.appendChild(swatch);
+      });
+      document.body.style.background = `linear-gradient(135deg, ${style.colors[0]} 0%, ${style.colors[1]} 100%)`;
+      document.getElementById('lighting').textContent = style.lighting;
+      document.getElementById('atmosphere').textContent = style.atmosphere;
+    }
+
+    function showTypingIndicator() {
+      document.getElementById('typingIndicator').classList.add('active');
+    }
+
+    function hideTypingIndicator() {
+      document.getElementById('typingIndicator').classList.remove('active');
+    }
+
+    function makeChoice(choiceText) {
+      showTypingIndicator();
+
+      setTimeout(() => {
+        storyState.choiceCount++;
+        storyState.storyProgress += 5 + Math.floor(Math.random() * 5);
+        storyState.engagementLevel += 5;
+        storyState.currentMood = analyzeMood(choiceText);
+
+        // Update UI
+        document.getElementById('narrative').innerHTML = getRandom(storyContent.narratives[storyState.currentMood]);
+        document.getElementById('dialogue').innerHTML = `"${getRandom(storyContent.dialogues[storyState.currentMood])}"`;
+        document.getElementById('dialogue').style.display = 'block';
+
+        updateVisualStyle(storyState.currentMood);
+        document.getElementById('currentMood').textContent = storyState.currentMood;
+
+        // Update stats
+        document.getElementById('choiceCount').textContent = storyState.choiceCount;
+        document.getElementById('branchCount').textContent = storyState.branches;
+        document.getElementById('timeSpent').textContent = Math.floor((Date.now() - storyState.startTime) / 60000) + 'm';
+        document.getElementById('progressBar').style.width = `${Math.min(storyState.storyProgress, 100)}%`;
+
+        // Engagement bar
+        const engagementWidth = Math.min(storyState.engagementLevel, 100);
+        document.getElementById('engagementBar').style.width = `${engagementWidth}%`;
+        document.getElementById('engagementText').textContent = engagementWidth > 80 ? 'High Engagement' : engagementWidth > 50 ? 'Medium Engagement' : 'Low Engagement';
+
+        generateRecommendations(storyState.currentMood);
+        hideTypingIndicator();
+      }, 1000);
+    }
+
+    function handleEnterKey(e) {
+      if (e.key === 'Enter') {
+        makeChoice(document.getElementById('customChoice').value);
+        document.getElementById('customChoice').value = '';
+      }
+    }
+
+    function makeCustomChoice() {
+      const custom = document.getElementById('customChoice').value.trim();
+      if (custom.length > 0) {
+        makeChoice(custom);
+        document.getElementById('customChoice').value = '';
+      }
+    }
+
+    function getRandom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function generateRecommendations(mood) {
+      const recs = {
+        adventurous: ['Explore mystical locations', 'Meet intriguing characters', 'Discover ancient secrets'],
+        mysterious: ['Investigate the shadows', 'Uncover hidden clues', 'Follow the cryptic trail'],
+        romantic: ['Find true love', 'Share a tender moment', 'Express your feelings'],
+        dark: ['Face your fears', 'Confront the darkness', 'Survive the night'],
+        humorous: ['Make a funny decision', 'Laugh at absurdity', 'Enjoy chaos'],
+        contemplative: ['Reflect on your journey', 'Seek inner peace', 'Listen to wisdom']
+      };
+      const container = document.getElementById('recommendationsList');
+      container.innerHTML = '';
+      (recs[mood] || recs.contemplative).forEach(text => {
+        const div = document.createElement('div');
+        div.className = 'recommendation-item';
+        div.textContent = text;
+        div.onclick = () => makeChoice(text);
+        container.appendChild(div);
+      });
+    }
+
+    function createParticles() {
+      const container = document.getElementById('particles');
+      for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.top = Math.random() * 100 + '%';
+        p.style.width = p.style.height = Math.random() * 4 + 2 + 'px';
+        p.style.animationDuration = Math.random() * 10 + 15 + 's';
+        container.appendChild(p);
+      }
+    }
+
+    window.onload = () => {
+      createParticles();
+      generateRecommendations(storyState.currentMood);
+    };
+  </script>
+</body>
+</html>
